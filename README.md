@@ -1,6 +1,6 @@
 # bootique
 
-Bootiqe is a theming system that uses a theme file to parse and output any number of template files.
+Bootique is a theming system that uses a theme file to parse and output any number of template files.
 
 ## Features
 - Any number of arbitrary key-value pairs for themes.
