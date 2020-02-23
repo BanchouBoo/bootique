@@ -47,12 +47,12 @@ changetheme() {
 		outputfile=$(parse_template "$1" "$2")
 		outputpath="$OUTPUT_DIR/$filename"
 
-		if [ -n "$outputfile" ]; then
+		if [ "$outputfile" ]; then
 			test ! -f "$OUTPUT_DIR" && mkdir -p "$OUTPUT_DIR"
 			fileexec=$(get_template_value "$outputfile" "booexec" | sed 's@<file>@'"$outputpath"'@g')
 			outputfile=$(echo "$outputfile" | sed '/^booexec/d')
 			echo "$outputfile" > "$outputpath"
-			if [ -n "$fileexec" ]; then
+			if [ "$fileexec" ]; then
 				eval "$fileexec"
 			fi
 		fi
@@ -173,6 +173,6 @@ done
 
 if [ "$menu" = true ]; then
 	menu "$template"
-elif [ -n "$theme" ]; then
+elif [ "$theme" ]; then
 	changetheme "$theme" "$template"
 fi
