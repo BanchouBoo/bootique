@@ -43,13 +43,13 @@ notify-send "My name is <name>!"
 If you're on Arch you can install `bootique-git` on the AUR (Note: I am not the maintainer of the AUR package), otherwise, just clone the repo and run the `bootique` file in your terminal.
 
 ## Usage
-`bootique -t /path/to/theme/` to change the theme using the templates from `BOOTIQUE_TEMPLATE_DIR`
+`bootique -t /path/to/theme/` changes the theme using templates from `BOOTIQUE_TEMPLATE_DIR`
 
-`bootique -t /path/to/theme/ -p /path/to/template(s)` to change the theme using a different template folder or a single template file (other output theme files will remain untouched)
+`bootique -t /path/to/theme/ -p /path/to/template(s)` changes the theme using a different template folder or a single template file (other output theme files will remain untouched)
 
-`bootique -m` to change a theme by selecting it with `BOOTIQUE_DMENU_COMMAND` using the templates from `BOOTIQUE_TEMPLATE_DIR`
+`bootique -m` changes a theme by selecting it with `BOOTIQUE_DMENU_COMMAND` using themes from `BOOTIQUE_THEME_DIR` and templates from `BOOTIQUE_TEMPLATE_DIR`
 
-`bootique -m -p /path/to/template(s)` to change a theme by selecting it with `BOOTIQUE_DMENU_COMMAND` using a different template folder or a single template file (other output theme files will remain untouched)
+`bootique -m -p /path/to/template(s)` changes a theme by selecting it with `BOOTIQUE_DMENU_COMMAND` using themes from `BOOTIQUE_THEME_DIR` and a different template folder or a single template file (other output theme files will remain untouched)
 
 For further details and a list of evironment variables you can set to customize things, you can read the output of `bootique -h` below.
 ```
