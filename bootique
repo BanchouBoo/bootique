@@ -111,7 +111,7 @@ Options:
     -p, --template <template path>
     	target template file or directory that the theme will be applied to, if not set then $BOOTIQUE_TEMPLATE_DIR will be used
 
-    --menu
+    -m, --menu
     	select the theme from a list using $BOOTIQUE_DMENU_COMMAND populated with files from $BOOTIQUE_THEME_DIR
 
 Evironment variables:
@@ -129,7 +129,7 @@ Evironment variables:
 
     BOOTIQUE_DMENU_COMMAND
     	command used for the --menu option, can be any command that accepts newline-delimited piped input such as dmenu, rofi, fzf, etc.
-        DEFAULT = dmenu
+        DEFAULT = dmenu -i -p Theme
 EOF
 	exit "${1:-0}"
 }

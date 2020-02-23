@@ -39,7 +39,19 @@ booexec: sh <file>
 notify-send "My name is <name>!"
 ```
 
-For further details and a list of evironment variables you can set to customize things, you can read the output of `bootique --help` below.
+## Installation
+If you're on Arch you can install `bootique-git` on the AUR (Note: I am not the maintainer of the AUR package), otherwise, just clone the repo and run the `bootique` file in your terminal.
+
+## Usage
+`bootique -t /path/to/theme/` to change the theme using the templates from `BOOTIQUE_TEMPLATE_DIR`
+
+`bootique -t /path/to/theme/ -p /path/to/template(s)` to change the theme using a different template folder or a single template file (other output theme files will remain untouched)
+
+`bootique -m` to change a theme by selecting it with `BOOTIQUE_DMENU_COMMAND` using the templates from `BOOTIQUE_TEMPLATE_DIR`
+
+`bootique -m -p /path/to/template(s)` to change a theme by selecting it with `BOOTIQUE_DMENU_COMMAND` using a different template folder or a single template file (other output theme files will remain untouched)
+
+For further details and a list of evironment variables you can set to customize things, you can read the output of `bootique -h` below.
 ```
 WARN: long opts (--theme, etc) do not work on BSD!
 Options:
@@ -52,7 +64,7 @@ Options:
     -p, --template <template path>
     	target template file or directory that the theme will be applied to, if not set then $BOOTIQUE_TEMPLATE_DIR will be used
 
-    --menu
+    -m, --menu
     	select the theme from a list using $BOOTIQUE_DMENU_COMMAND populated with files from $BOOTIQUE_THEME_DIR
 
 Evironment variables:
@@ -70,5 +82,5 @@ Evironment variables:
 
     BOOTIQUE_DMENU_COMMAND
     	command used for the --menu option, can be any command that accepts newline-delimited piped input such as dmenu, rofi, fzf, etc.
-        DEFAULT = dmenu
+        DEFAULT = dmenu -i -p Them
 ```
