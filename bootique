@@ -8,8 +8,9 @@ TEMPLATE_DIR="${BOOTIQUE_TEMPLATE_DIR:-$CONFIG_DIR/bootique/templates}"
 OUTPUT_DIR="${BOOTIQUE_OUTPUT_DIR:-$CACHE_DIR/bootique/theme}"
 DMENU_COMMAND="${BOOTIQUE_DMENU_COMMAND:-dmenu -i -p Theme}"
 
-error() {
-	printf "[\033[0;31mERROR\033[0m] %s\n" "$@"
+die() {
+    >&2 printf "[\033[0;31mERROR\033[0m] %s\n" "$*"
+    exit 1
 }
 
 get_template_value() {
@@ -58,10 +59,7 @@ changetheme() {
 		fi
 	}
 
-	if [ ! -f "$1" ]; then
-		error "$1 is not a file"
-		exit 1
-	fi
+	[ -f "$1" ] || die "$1 is not a file"
 
 	theme="$1"
 	template_target="${2:-$TEMPLATE_DIR}"
@@ -74,16 +72,14 @@ changetheme() {
 			filefromtemplate "$theme" "$template"
 		done
 	else
-		error "Invalid template target"
-		exit 1
+		die "Invalid template target"
 	fi
 }
 
 menu() {
 	COMMAND_BASE="$(echo "$DMENU_COMMAND" | cut -d ' ' -f 1)"
 	if [ ! "$(command -v "$(echo "$COMMAND_BASE" | cut -d ' ' -f 1)")" ]; then
-		error "dmenu command '$COMMAND_BASE' not installed"
-		exit 1
+        die "dmenu command '$COMMAND_BASE' not installed"
 	fi
 
 	cd "$THEME_DIR" || exit 1
@@ -95,7 +91,8 @@ menu() {
 }
 
 help() {
-	echo "Options:
+>&2 cat <<"EOF"
+Options:
     -h, --help
     	display this help page
 
@@ -103,27 +100,28 @@ help() {
     	target theme file used to parse templates (not used with --menu)
 
     -p, --template <template path>
-    	target template file or directory that the theme will be applied to, if not set then \$BOOTIQUE_TEMPLATE_DIR will be used
+    	target template file or directory that the theme will be applied to, if not set then $BOOTIQUE_TEMPLATE_DIR will be used
 
     --menu
-    	select the theme from a list using \$BOOTIQUE_DMENU_COMMAND populated with files from \$BOOTIQUE_THEME_DIR
+    	select the theme from a list using $BOOTIQUE_DMENU_COMMAND populated with files from $BOOTIQUE_THEME_DIR
 
 Evironment variables:
     BOOTIQUE_THEME_DIR
     	directory where themes are stored, used for the --menu option
-        DEFAULT = \$XDG_CONFIG_HOME/bootique/themes
+        DEFAULT = $XDG_CONFIG_HOME/bootique/themes
 
     BOOTIQUE_TEMPLATE_DIR
     	directory where templates are stored, used when no template file or directory is provided
-        DEFAULT = \$XDG_CONFIG_HOME/bootique/templates
+        DEFAULT = $XDG_CONFIG_HOME/bootique/templates
 
     BOOTIQUE_OUTPUT_DIR
     	directory where theme files are output
-        DEFAULT = \$XDG_CACHE_HOME/bootique/theme
+        DEFAULT = $XDG_CACHE_HOME/bootique/theme
 
     BOOTIQUE_DMENU_COMMAND
     	command used for the --menu option
-        DEFAULT = dmenu"
+        DEFAULT = dmenu
+EOF
 	exit "${1:-0}"
 }
 
