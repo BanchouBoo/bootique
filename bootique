@@ -127,24 +127,20 @@ Evironment variables:
 	exit "${1:-0}"
 }
 
-if [ $# -eq 0 ]; then
-	help
-fi
+[ "$1" ] || help
 
 options="$(getopt -n 'bootique' -s sh -o 't:p:h' -l 'theme:,template:,menu,help' -- "$@")"
 
 # If invalid options
-if [ $? -gt 0 ]; then
-	help 1
-fi
+[ $? -eq 0 ] || help 1
 
 set -- $options
 
 template="$TEMPLATE_DIR"
 
 # Parse options
-while [ $# -gt 0 ]; do
-	case $1 in
+while [ "$1" ]; do
+	case "$1" in
 		-h|--help)
 			help
 			break
