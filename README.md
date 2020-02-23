@@ -41,6 +41,7 @@ notify-send "My name is <name>!"
 
 For further details and a list of evironment variables you can set to customize things, you can read the output of `bootique --help` below.
 ```
+WARN: long opts (--theme, etc) do not work on BSD!
 Options:
     -h, --help
     	display this help page

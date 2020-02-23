@@ -8,6 +8,8 @@ TEMPLATE_DIR="${BOOTIQUE_TEMPLATE_DIR:-$CONFIG_DIR/bootique/templates}"
 OUTPUT_DIR="${BOOTIQUE_OUTPUT_DIR:-$CACHE_DIR/bootique/theme}"
 DMENU_COMMAND="${BOOTIQUE_DMENU_COMMAND:-dmenu -i -p Theme}"
 
+uname | grep -q -i 'bsd' && BSD=true
+
 die() {
     >&2 printf "[\033[0;31mERROR\033[0m] %s\n" "$*"
     exit 1
@@ -91,6 +93,7 @@ menu() {
 }
 
 help() {
+	[ "$BSD" ] && >&2 echo "WARN: long opts (--theme, etc) do not work on BSD!"
 >&2 cat <<"EOF"
 Options:
     -h, --help
@@ -119,7 +122,7 @@ Evironment variables:
         DEFAULT = $XDG_CACHE_HOME/bootique/theme
 
     BOOTIQUE_DMENU_COMMAND
-    	command used for the --menu option
+    	command used for the --menu option. Can be any command that accepts newline-delimited piped input such as dmenu, rofi, fzf, etc.
         DEFAULT = dmenu
 EOF
 	exit "${1:-0}"
@@ -127,7 +130,11 @@ EOF
 
 [ "$1" ] || help
 
-options="$(getopt -n 'bootique' -s sh -o 't:p:h' -l 'theme:,template:,menu,help' -- "$@")"
+if [ "$BSD" ]; then
+	options="$(getopt 't:p:hm' "$@")"
+else
+	options="$(getopt -n 'bootique' -s sh -o 't:p:hm' -l 'theme:,template:,menu,help' -- "$@")"
+fi
 
 # If invalid options
 [ $? -eq 0 ] || help 1
@@ -143,7 +150,7 @@ while [ "$1" ]; do
 			help
 			break
 			;;
-		--menu)
+		-m|--menu)
 			menu=true
 			;;
 		-t|--theme)
