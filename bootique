@@ -1,0 +1,178 @@
+#!/bin/sh
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}"
+
+THEME_DIR="${BOOTIQUE_THEME_DIR:-$CONFIG_DIR/bootique/themes}"
+TEMPLATE_DIR="${BOOTIQUE_TEMPLATE_DIR:-$CONFIG_DIR/bootique/templates}"
+OUTPUT_DIR="${BOOTIQUE_OUTPUT_DIR:-$CACHE_DIR/bootique/theme}"
+DMENU_COMMAND="${BOOTIQUE_DMENU_COMMAND:-dmenu -i -p Theme}"
+
+error() {
+	printf "[\033[0;31mERROR\033[0m] %s\n" "$@"
+}
+
+get_template_value() {
+	theme="$1"
+	key="$2"
+
+	if [ -f "$theme" ]; then
+		value=$(grep -v -e '^!' -e '^$' "$theme" | grep "^\<$key\>" | cut -d ':' -f 2- | sed -e 's/^[ \t]*//g' -e 's/[ \t]*$//g')
+	else
+		value=$(echo "$theme" | grep -v -e '^!' -e '^$' | grep "^\<$key\>" | cut -d ':' -f 2- | sed -e 's/^[ \t]*//g' -e 's/[ \t]*$//g')
+	fi
+
+	echo "$value"
+}
+
+parse_template() {
+	theme="$1"
+	template="$2"
+	template_contents=$(cat "$template")
+
+	while read -r line; do
+		key=$(echo "$line" | cut -d ':' -f 1 | sed -e 's/^[ \t]*//g' -e 's/[ \t]*$//g')
+		value=$(echo "$line" | cut -d ':' -f 2- | sed -e 's/^[ \t]*//g' -e 's/[ \t]*$//g')
+		template_contents=$(echo "$template_contents" | sed "s@<$key>@$value@g")
+	done << THEME
+		$(grep -v -e '^!' -e '^$' "$theme")
+THEME
+
+	echo "$template_contents"
+}
+
+changetheme() {
+	filefromtemplate() {
+		filename=$(basename "$2" | rev | cut -d '.' -f 2- | rev)
+		outputfile=$(parse_template "$1" "$2")
+		outputpath="$OUTPUT_DIR/$filename"
+
+		if [ -n "$outputfile" ]; then
+			test ! -f "$OUTPUT_DIR" && mkdir -p "$OUTPUT_DIR"
+			fileexec=$(get_template_value "$outputfile" "booexec" | sed 's@<file>@'"$outputpath"'@g')
+			outputfile=$(echo "$outputfile" | sed '/^booexec/d')
+			echo "$outputfile" > "$outputpath"
+			if [ -n "$fileexec" ]; then
+				eval "$fileexec"
+			fi
+		fi
+	}
+
+	if [ ! -f "$1" ]; then
+		error "$1 is not a file"
+		exit 1
+	fi
+
+	theme="$1"
+	template_target="${2:-$TEMPLATE_DIR}"
+
+	if [ -f "$template_target" ]; then
+		filefromtemplate "$1" "$template_target"
+	elif [ -d "$template_target" ]; then
+		templates=$(find "$template_target" -name "*.template")
+		for template in $templates; do
+			filefromtemplate "$theme" "$template"
+		done
+	else
+		error "Invalid template target"
+		exit 1
+	fi
+}
+
+menu() {
+	COMMAND_BASE="$(echo "$DMENU_COMMAND" | cut -d ' ' -f 1)"
+	if [ ! "$(command -v "$(echo "$COMMAND_BASE" | cut -d ' ' -f 1)")" ]; then
+		error "dmenu command '$COMMAND_BASE' not installed"
+		exit 1
+	fi
+
+	cd "$THEME_DIR" || exit 1
+
+	theme=$(find . -name '*.theme' | sed 's:\./::g' | $DMENU_COMMAND)
+	changetheme "$theme" "$1"
+
+	exit
+}
+
+help() {
+	echo "Options:
+    -h, --help
+    	display this help page
+
+    -t, --theme <theme path>
+    	target theme file used to parse templates (not used with --menu)
+
+    -p, --template <template path>
+    	target template file or directory that the theme will be applied to, if not set then \$BOOTIQUE_TEMPLATE_DIR will be used
+
+    --menu
+    	select the theme from a list using \$BOOTIQUE_DMENU_COMMAND populated with files from \$BOOTIQUE_THEME_DIR
+
+Evironment variables:
+    BOOTIQUE_THEME_DIR
+    	directory where themes are stored, used for the --menu option
+        DEFAULT = \$XDG_CONFIG_HOME/bootique/themes
+
+    BOOTIQUE_TEMPLATE_DIR
+    	directory where templates are stored, used when no template file or directory is provided
+        DEFAULT = \$XDG_CONFIG_HOME/bootique/templates
+
+    BOOTIQUE_OUTPUT_DIR
+    	directory where theme files are output
+        DEFAULT = \$XDG_CACHE_HOME/bootique/theme
+
+    BOOTIQUE_DMENU_COMMAND
+    	command used for the --menu option
+        DEFAULT = dmenu"
+	exit "${1:-0}"
+}
+
+if [ $# -eq 0 ]; then
+	help
+fi
+
+options="$(getopt -n 'bootique' -s sh -o 't:p:h' -l 'theme:,template:,menu,help' -- "$@")"
+
+# If invalid options
+if [ $? -gt 0 ]; then
+	help 1
+fi
+
+set -- $options
+
+template="$TEMPLATE_DIR"
+
+# Parse options
+while [ $# -gt 0 ]; do
+	case $1 in
+		-h|--help)
+			help
+			break
+			;;
+		--menu)
+			menu=true
+			;;
+		-t|--theme)
+			theme="$(echo "$2" | tr -d \')"
+			shift
+			;;
+		-p|--template)
+			template="$(echo "$2" | tr -d \')"
+			shift
+			;;
+		--)
+			shift
+			break
+			;;
+		*)
+			break
+			;;
+		esac
+	shift
+done
+
+if [ "$menu" = true ]; then
+	menu "$template"
+elif [ -n "$theme" ]; then
+	changetheme "$theme" "$template"
+fi
