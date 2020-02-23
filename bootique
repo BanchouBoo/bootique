@@ -15,14 +15,20 @@ die() {
     exit 1
 }
 
+# Trims leading and trailing whitespace
+trim() {
+	set -- $(cat)
+	echo "$*"
+}
+
 get_template_value() {
 	theme="$1"
 	key="$2"
 
 	if [ -f "$theme" ]; then
-		value=$(grep -v -e '^!' -e '^$' "$theme" | grep "^\<$key\>" | cut -d ':' -f 2- | sed -e 's/^[ \t]*//g' -e 's/[ \t]*$//g')
+		value=$(grep -v -e '^!' -e '^$' "$theme" | grep "^\<$key\>" | cut -d ':' -f 2- | trim)
 	else
-		value=$(echo "$theme" | grep -v -e '^!' -e '^$' | grep "^\<$key\>" | cut -d ':' -f 2- | sed -e 's/^[ \t]*//g' -e 's/[ \t]*$//g')
+		value=$(echo "$theme" | grep -v -e '^!' -e '^$' | grep "^\<$key\>" | cut -d ':' -f 2- | trim)
 	fi
 
 	echo "$value"
@@ -34,8 +40,8 @@ parse_template() {
 	template_contents=$(cat "$template")
 
 	while read -r line; do
-		key=$(echo "$line" | cut -d ':' -f 1 | sed -e 's/^[ \t]*//g' -e 's/[ \t]*$//g')
-		value=$(echo "$line" | cut -d ':' -f 2- | sed -e 's/^[ \t]*//g' -e 's/[ \t]*$//g')
+		key=$(echo "$line" | cut -d ':' -f 1 | trim)
+		value=$(echo "$line" | cut -d ':' -f 2- | trim)
 		template_contents=$(echo "$template_contents" | sed "s@<$key>@$value@g")
 	done << THEME
 		$(grep -v -e '^!' -e '^$' "$theme")
@@ -122,7 +128,7 @@ Evironment variables:
         DEFAULT = $XDG_CACHE_HOME/bootique/theme
 
     BOOTIQUE_DMENU_COMMAND
-    	command used for the --menu option. Can be any command that accepts newline-delimited piped input such as dmenu, rofi, fzf, etc.
+    	command used for the --menu option, can be any command that accepts newline-delimited piped input such as dmenu, rofi, fzf, etc.
         DEFAULT = dmenu
 EOF
 	exit "${1:-0}"

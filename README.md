@@ -69,6 +69,6 @@ Evironment variables:
         DEFAULT = $XDG_CACHE_HOME/bootique/theme
 
     BOOTIQUE_DMENU_COMMAND
-    	command used for the --menu option
+    	command used for the --menu option, can be any command that accepts newline-delimited piped input such as dmenu, rofi, fzf, etc.
         DEFAULT = dmenu
 ```
