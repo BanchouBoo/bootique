@@ -40,7 +40,11 @@ notify-send "My name is <name>!"
 ```
 
 ## Installation
-If you're on Arch you can install `bootique-git` on the AUR (Note: I am not the maintainer of the AUR package), otherwise, just clone the repo and run the `bootique` file in your terminal.
+On Arch you can install `bootique-git` through the AUR (Note: I am not the maintainer)
+
+On any system, you can install `bootique` through [sea](https://github.com/h34ting4ppliance/sea)
+
+Otherwise, just clone the repo and run the `bootique` file in your terminal
 
 ## Usage
 `bootique -t /path/to/theme/` changes the theme using templates from `BOOTIQUE_TEMPLATE_DIR`
