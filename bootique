@@ -21,14 +21,23 @@ trim() {
 	echo "$*"
 }
 
+# Take an input file or stdin and remove comments and empty lines
+filtercomments() {
+	if [ "$1" ]; then
+		grep -v -e '^!' -e '^$' "$1"
+	else
+		cat | grep -v -e '^!' -e '^$'
+	fi
+}
+
 get_template_value() {
 	theme="$1"
 	key="$2"
 
 	if [ -f "$theme" ]; then
-		value=$(grep -v -e '^!' -e '^$' "$theme" | grep "^\<$key\>" | cut -d ':' -f 2- | trim)
+		value=$(filtercomments "$theme" | grep "^\<$key\>" | cut -d ':' -f 2- | trim)
 	else
-		value=$(echo "$theme" | grep -v -e '^!' -e '^$' | grep "^\<$key\>" | cut -d ':' -f 2- | trim)
+		value=$(echo "$theme" | filtercomments | grep "^\<$key\>" | cut -d ':' -f 2- | trim)
 	fi
 
 	echo "$value"
@@ -44,7 +53,7 @@ parse_template() {
 		value=$(echo "$line" | cut -d ':' -f 2- | trim)
 		template_contents=$(echo "$template_contents" | sed "s@<$key>@$value@g")
 	done << THEME
-		$(grep -v -e '^!' -e '^$' "$theme")
+		$(filtercomments "$theme")
 THEME
 
 	echo "$template_contents"
