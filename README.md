@@ -30,7 +30,7 @@ notify-send "My name is <name>!" # using the theme above, <name> will be replace
 
 Hopefully from these simple examples you're starting to understand the versatility of this system and how easy it makes to put together a global theme to use with a wide array of different software and files.
 
-But templates can be even more versatile by adding a special line to them to execute shell commands. The format to do so is `booexec: <shell stuff here>`. The `booexec` line can go anywhere but only the first instance of it will be read and executed. The `booexec` line will also be stripped from the output file and has a special `<file>` key to reference the path where the output file will go. So using the following example we can then run our script after it's parsed and we'll recieve the notification `My name is Caleb!` when we change our theme.
+But templates can be even more versatile by adding a special line to them to execute shell commands. The format to do so is `booexec: <shell stuff here>`. The `booexec` line can go anywhere and you can have any number of them. The `booexec` line will also be stripped from the output file and has a special `<file>` key to reference the path where the output file will go. So using the following example we can then run our script after it's parsed and we'll recieve the notification `My name is Caleb!` when we change our theme.
 
 ex:
 ```sh

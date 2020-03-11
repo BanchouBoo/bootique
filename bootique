@@ -1,4 +1,5 @@
 #!/bin/sh
+# TODO: Replace getopt with getopts or custom parsing, for portability
 
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}"
@@ -15,32 +16,9 @@ die() {
     exit 1
 }
 
-# Trims leading and trailing whitespace
-trim() {
-	set -- $(cat)
-	echo "$*"
-}
-
 # Take an input file or stdin and remove comments and empty lines
 filtercomments() {
-	if [ "$1" ]; then
-		grep -v -e '^!' -e '^$' "$1"
-	else
-		cat | grep -v -e '^!' -e '^$'
-	fi
-}
-
-get_template_value() {
-	theme="$1"
-	key="$2"
-
-	if [ -f "$theme" ]; then
-		value=$(filtercomments "$theme" | grep "^\<$key\>" | cut -d ':' -f 2- | trim)
-	else
-		value=$(echo "$theme" | filtercomments | grep "^\<$key\>" | cut -d ':' -f 2- | trim)
-	fi
-
-	echo "$value"
+	sed -e 's/!.*$//g' -e '/^[[:space:]]*$/d' "$@"
 }
 
 parse_template() {
@@ -49,8 +27,13 @@ parse_template() {
 	template_contents=$(cat "$template")
 
 	while read -r line; do
-		key=$(echo "$line" | cut -d ':' -f 1 | trim)
-		value=$(echo "$line" | cut -d ':' -f 2- | trim)
+		key=${line%:*}
+		value=${line#*:}
+
+		# Find all non-whitespace charaters, remove them, then use the resulting string to trim whitespace
+		value=${value#${value%%[! ]*}}
+		value=${value%${value##*[! ]}}
+
 		template_contents=$(echo "$template_contents" | sed "s@<$key>@$value@g")
 	done << THEME
 		$(filtercomments "$theme")
@@ -61,18 +44,23 @@ THEME
 
 changetheme() {
 	filefromtemplate() {
-		filename=$(basename "$2" | rev | cut -d '.' -f 2- | rev)
+		filename="${2##*/}"
+		filename="${filename%.*}"
 		outputfile=$(parse_template "$1" "$2")
 		outputpath="$OUTPUT_DIR/$filename"
 
 		if [ "$outputfile" ]; then
-			test ! -f "$OUTPUT_DIR" && mkdir -p "$OUTPUT_DIR"
-			fileexec=$(get_template_value "$outputfile" "booexec" | sed 's@<file>@'"$outputpath"'@g')
+			[ -d "$OUTPUT_DIR" ] || mkdir -p "$OUTPUT_DIR"
+
+			fileexec=$(echo "$outputfile" | grep "[[:space:]]*booexec" \
+			| sed 's@<file>@'"$outputpath"'@g')
+
 			outputfile=$(echo "$outputfile" | sed '/^booexec/d')
 			echo "$outputfile" > "$outputpath"
-			if [ "$fileexec" ]; then
-				eval "$fileexec"
-			fi
+
+			echo "$fileexec" | while read line; do
+				eval "${line#*:}"
+			done
 		fi
 	}
 
@@ -94,8 +82,8 @@ changetheme() {
 }
 
 menu() {
-	COMMAND_BASE="$(echo "$DMENU_COMMAND" | cut -d ' ' -f 1)"
-	if [ ! "$(command -v "$(echo "$COMMAND_BASE" | cut -d ' ' -f 1)")" ]; then
+	COMMAND_BASE="${DMENU_COMMAND%% *}"
+	if [ ! "$(command -v $COMMAND_BASE)" ]; then
         die "dmenu command '$COMMAND_BASE' not installed"
 	fi
 
