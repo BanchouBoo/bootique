@@ -16,9 +16,10 @@ die() {
     exit 1
 }
 
-# Take an input file or stdin and remove comments and empty lines
-filtercomments() {
-	sed -e 's/!.*$//g' -e '/^[[:space:]]*$/d' "$@"
+# Remove comments, empty lines, and unnecesary whitespace
+to_parsable() {
+	sed -e 's/!.*$//' -e '/^[[:space:]]*$/d' \
+	-e 's/:[[:space:]]*/:/' -e 's/^[[:space:]]*//' "$@"
 }
 
 parse_template() {
@@ -27,16 +28,12 @@ parse_template() {
 	template_contents=$(cat "$template")
 
 	while read -r line; do
-		key=${line%:*}
+		key=${line%%:*}
 		value=${line#*:}
-
-		# Find all non-whitespace charaters, remove them, then use the resulting string to trim whitespace
-		value=${value#${value%%[! ]*}}
-		value=${value%${value##*[! ]}}
 
 		template_contents=$(echo "$template_contents" | sed "s@<$key>@$value@g")
 	done << THEME
-		$(filtercomments "$theme")
+		$(to_parsable "$theme")
 THEME
 
 	echo "$template_contents"
