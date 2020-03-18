@@ -36,6 +36,22 @@ parse_template() {
 		$(to_parsable "$theme")
 THEME
 
+	while read -r line; do
+		[ "$line" ] || continue
+		line="${line#*<}"
+		line="${line%?}"
+		command="${line%%:*}"
+		args="${line#*:}"
+		if command -v "$command" > /dev/null; then
+			value=$(eval "$command" "$args")
+			template_contents=$(echo "$template_contents" | sed "s@<$line>@$value@")
+		else
+			die "'$command' does not exist!"
+		fi
+	done << MODS
+		$(echo "$template_contents" | grep "<[^>]*:[^>]*>")
+MODS
+
 	echo "$template_contents"
 }
 
@@ -55,7 +71,7 @@ changetheme() {
 			outputfile=$(echo "$outputfile" | sed '/^booexec/d')
 			echo "$outputfile" > "$outputpath"
 
-			echo "$fileexec" | while read line; do
+			echo "$fileexec" | while read -r line; do
 				eval "${line#*:}"
 			done
 		fi

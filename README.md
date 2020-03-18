@@ -18,6 +18,7 @@ ex:
 red: ff0000
 name: Caleb
 website: github.com
+epoch: January 1 1970 UTC
 ```
 
 A template file is also very simple. For the most part the file should look exactly like a normal file with the exception of where you wanna insert theme values, which is done with `<keyname>`. Templates are expected to have the file extension `.template`.
@@ -37,6 +38,15 @@ ex:
 booexec: sh <file>
 #!/bin/sh
 notify-send "My name is <name>!"
+```
+
+You can also insert the output of commands into templates with the format `<command:args>`. The following snippet would send "Unix epoch was on January 1 1970"
+
+Args are optional, if you want output from a command that takes no args you would do `<command:>`
+
+```sh
+#!/bin/sh
+notify-send "Unix epoch was on <date:--date='<epoch>' +'%B %d %Y'>"
 ```
 
 ## Installation
