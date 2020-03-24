@@ -37,17 +37,16 @@ parse_template() {
 THEME
 
 	while read -r line; do
-		[ "$line" ] || continue
+		[ "$line" ] || continue # weird bug where I'm given a few extra lines
 		line="${line#*<}"
 		line="${line%?}"
 		command="${line%%:*}"
 		args="${line#*:}"
-		if command -v "$command" > /dev/null; then
+		command -v "$command" > /dev/null && {
 			value=$(eval "$command" "$args")
 			template_contents=$(echo "$template_contents" | sed "s@<$line>@$value@")
-		else
-			die "'$command' does not exist!"
-		fi
+		} || die "'$command' does not exist!"
+
 	done << MODS
 		$(echo "$template_contents" | grep "<[^>]*:[^>]*>")
 MODS
@@ -62,7 +61,7 @@ changetheme() {
 		outputfile=$(parse_template "$1" "$2")
 		outputpath="$OUTPUT_DIR/$filename"
 
-		if [ "$outputfile" ]; then
+		[ "$outputfile" ] && {
 			[ -d "$OUTPUT_DIR" ] || mkdir -p "$OUTPUT_DIR"
 
 			fileexec=$(echo "$outputfile" | grep "[[:space:]]*booexec" \
@@ -74,7 +73,7 @@ changetheme() {
 			echo "$fileexec" | while read -r line; do
 				eval "${line#*:}"
 			done
-		fi
+		}
 	}
 
 	[ -f "$1" ] || die "$1 is not a file"
@@ -82,23 +81,19 @@ changetheme() {
 	theme="$1"
 	template_target="${2:-$TEMPLATE_DIR}"
 
-	if [ -f "$template_target" ]; then
-		filefromtemplate "$1" "$template_target"
-	elif [ -d "$template_target" ]; then
-		templates=$(find "$template_target" -name "*.template")
-		for template in $templates; do
+	[ -e "$template_target" ] && {
+		find "$template_target" -name "*.template" | \
+		while read -r template; do
 			filefromtemplate "$theme" "$template"
 		done
-	else
-		die "Invalid template target"
-	fi
+	} || die "Invalid template target"
 }
 
 menu() {
 	COMMAND_BASE="${DMENU_COMMAND%% *}"
-	if [ ! "$(command -v $COMMAND_BASE)" ]; then
-        die "dmenu command '$COMMAND_BASE' not installed"
-	fi
+
+	command -v "$COMMAND_BASE" > /dev/null || \
+	die "dmenu command '$COMMAND_BASE' not installed"
 
 	cd "$THEME_DIR" || exit 1
 
@@ -150,10 +145,7 @@ if [ "$BSD" ]; then
 	options="$(getopt 't:p:hm' "$@")"
 else
 	options="$(getopt -n 'bootique' -s sh -o 't:p:hm' -l 'theme:,template:,menu,help' -- "$@")"
-fi
-
-# If invalid options
-[ $? -eq 0 ] || help 1
+fi || help 1
 
 set -- $options
 
@@ -188,8 +180,6 @@ while [ "$1" ]; do
 	shift
 done
 
-if [ "$menu" = true ]; then
-	menu "$template"
-elif [ "$theme" ]; then
-	changetheme "$theme" "$template"
-fi
+# Refactor to case statement?
+[ "$menu" ] && menu "$template"
+[ "$theme" ] && changetheme "$theme" "$template"
