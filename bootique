@@ -1,5 +1,4 @@
 #!/bin/sh
-# TODO: Replace getopt with getopts or custom parsing, for portability
 
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}"
@@ -8,8 +7,6 @@ THEME_DIR="${BOOTIQUE_THEME_DIR:-$CONFIG_DIR/bootique/themes}"
 TEMPLATE_DIR="${BOOTIQUE_TEMPLATE_DIR:-$CONFIG_DIR/bootique/templates}"
 OUTPUT_DIR="${BOOTIQUE_OUTPUT_DIR:-$CACHE_DIR/bootique/theme}"
 DMENU_COMMAND="${BOOTIQUE_DMENU_COMMAND:-dmenu -i -p Theme}"
-
-uname | grep -q -i 'bsd' && BSD=true
 
 die() {
     >&2 printf "[\033[0;31mERROR\033[0m] %s\n" "$*"
@@ -104,8 +101,7 @@ menu() {
 }
 
 help() {
-	[ "$BSD" ] && >&2 echo "WARN: long opts (--theme, etc) do not work on BSD!"
->&2 cat <<"EOF"
+>&2 cat << "EOF"
 Options:
     -h, --help
     	display this help page
@@ -136,24 +132,14 @@ Evironment variables:
     	command used for the --menu option, can be any command that accepts newline-delimited piped input such as dmenu, rofi, fzf, etc.
         DEFAULT = dmenu -i -p Theme
 EOF
-	exit "${1:-0}"
+	exit
 }
 
 [ "$1" ] || help
 
-if [ "$BSD" ]; then
-	options="$(getopt 't:p:hm' "$@")"
-else
-	options="$(getopt -n 'bootique' -s sh -o 't:p:hm' -l 'theme:,template:,menu,help' -- "$@")"
-fi || help 1
-
-set -- $options
-
-template="$TEMPLATE_DIR"
-
 # Parse options
 while [ "$1" ]; do
-	case "$1" in
+	case $1 in
 		-h|--help)
 			help
 			break
@@ -162,23 +148,23 @@ while [ "$1" ]; do
 			menu=true
 			;;
 		-t|--theme)
+			[ "$theme" ] && die "Cannot set more than one theme"
 			theme="$(echo "$2" | tr -d \')"
 			shift
 			;;
 		-p|--template)
+			[ "$template" ] && die "Cannot set more than one template, set a directory instead"
 			template="$(echo "$2" | tr -d \')"
 			shift
 			;;
-		--)
-			shift
-			break
-			;;
 		*)
-			break
+			die "Invalid arg '$1'"
 			;;
-		esac
+	esac
 	shift
 done
+
+: "${template:=$TEMPLATE_DIR}"
 
 # Refactor to case statement?
 [ "$menu" ] && menu "$template"
