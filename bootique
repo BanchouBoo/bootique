@@ -36,7 +36,7 @@ THEME
 	while read -r line; do
 		[ "$line" ] || continue # weird bug where I'm given a few extra lines
 		line="${line#*<}"
-		line="${line%?}"
+		line="${line%>*}"
 		command="${line%%:*}"
 		args="${line#*:}"
 		command -v "$command" > /dev/null && {
